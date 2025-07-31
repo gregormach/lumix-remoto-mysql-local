@@ -496,7 +496,7 @@ app.post(
     try {
       if (modelName === "ventas") {
         const venta = {
-          clienteId: req.body.clienteId,
+          clienteid: req.body.clienteid,
           codventa: req.body.codventa,
           fecha: req.body.fecha,
           subtotal: req.body.subtotal,
@@ -509,24 +509,24 @@ app.post(
         const modelvd = req.db.models["ventasdetalles"];
         req.body.productos.forEach((element) => {
           const detalle = {
-            ventaId: records.dataValues.id,
-            productoId: element.productoId,
+            ventaid: records.dataValues.id,
+            productoid: element.productoid,
             cantidad: element.cantidad,
-            precioUnitario: element.precioUnitario,
+            preciounitario: element.preciounitario,
           };
           modelvd.create(detalle);
         });
         return res.json(records);
       }
       if (modelName === "pedidos") {
-        req.body.productosId.forEach((element) => {
+        req.body.productosid.forEach((element) => {
           const pedido = {
-            clienteId: req.body.clienteId,
+            clienteid: req.body.clienteid,
             nombre: req.body.nombre,
-            productosId: element.productoId,
+            productosid: element.productoid,
             fecha: req.body.fecha,
             cantidad: element.cantidad,
-            precioUnitario: element.precioUnitario,
+            preciounitario: element.preciounitario,
             stock: element.stock,
           };
           //console.log(pedido)
@@ -537,11 +537,11 @@ app.post(
       if (modelName === "compras") {
         req.body.forEach((element) => {
           const compras = {
-            proveedorId: element.proveedorId,
+            proveedorid: element.proveedorid,
             fecha: element.fecha,
-            productoId: element.productoId,
+            productoid: element.productoid,
             cantidad: element.cantidad,
-            precioUnitario: element.precioUnitario,
+            preciounitario: element.preciounitario,
             subtotal: element.subtotal,
             iva: element.iva,
             total: element.total,
@@ -550,10 +550,10 @@ app.post(
           model.create(compras);
           const modelp = req.db.models["productos"];
           updateCostosPreciosProductos(
-            element.precioUnitario,
+            element.preciounitario,
             element.porcentaje,
             element.costo,
-            element.productoId,
+            element.productoid,
             modelp
           );
         });
@@ -604,19 +604,19 @@ app.get(
         const [recordsProductos, recordspro] = await req.db.sequelize.query(`
           SELECT
             t1.id,
-            t1.codigoP,
+            t1.codigop,
             t1.nombre,
-            (SELECT nombre FROM categorias WHERE id = t1.categoriaId) AS categorias,
-            t1.precioVenta,
-            COALESCE(t1.stock + SUM(t2.cantidad), t1.stock) - COALESCE((SELECT SUM(cantidad) FROM ventasdetalles WHERE productoId = t1.id ), 0) - COALESCE((SELECT SUM(cantidad) FROM pedidos WHERE productosId = t1.id), 0) AS stock,
+            (SELECT nombre FROM categorias WHERE id = t1.categoriaid) AS categorias,
+            t1.precioventa,
+            COALESCE(t1.stock + SUM(t2.cantidad), t1.stock) - COALESCE((SELECT SUM(cantidad) FROM ventasdetalles WHERE productoid = t1.id ), 0) - COALESCE((SELECT SUM(cantidad) FROM pedidos WHERE productosid = t1.id), 0) AS stock,
             t1.imagen,
-            (t1.precioVenta / t1.tasa) AS costo,
+            (t1.precioventa / t1.tasa) AS costo,
             t1.status,
             t1.exento
           FROM
             productos t1
           LEFT JOIN
-            compras t2 ON t1.id = t2.productoId
+            compras t2 ON t1.id = t2.productoid
           GROUP BY t1.id;
           `);
 
@@ -626,10 +626,10 @@ app.get(
         const [records, recordsc] = await req.db.sequelize.query(`
         SELECT 
         t1.id,
-        (SELECT nombre FROM proveedores WHERE id = t1.proveedorId) AS empresa,
-        (SELECT nombre FROM productos WHERE id = t1.productoId) AS producto,
+        (SELECT nombre FROM proveedores WHERE id = t1.proveedorid) AS empresa,
+        (SELECT nombre FROM productos WHERE id = t1.productoid) AS producto,
         t1.fecha, t1.cantidad, 
-        t1.precioUnitario, 
+        t1.preciounitario, 
         t1.subtotal, 
         t1.iva, 
         t1.total, 
@@ -674,7 +674,7 @@ app.get(
       if (modelName === "pedidos") {
         const records = await model.findAll({
           where: {
-            clienteId: id,
+            clienteid: id,
           },
         });
         return res.json(records);
@@ -711,7 +711,7 @@ app.put(
        pros.forEach(element => {
          const codigoAleatorio = generarCodigoAleatorio();
           const idd = element.id;
-          model.update({codigoP: codigoAleatorio}, {
+          model.update({codigop: codigoAleatorio}, {
             where: { 'id':idd },
           });
         });
@@ -742,7 +742,7 @@ app.put(
         const modelPagar = req.db.models["cuentasxpagars"];
         const arrayPagar = {
           comprasid: id,
-          proveedorid: infoCompra.proveedorId,
+          proveedorid: infoCompra.proveedorid,
           fechacompra: infoCompra.fecha,
           totalcompra: infoCompra.total,
         };
@@ -764,7 +764,7 @@ app.put(
         const modelCobrar = req.db.models["cuentasxcobrars"];
         const arrayCobrar = {
           ventasid: id,
-          clienteid: infoVenta.clienteId,
+          clienteid: infoVenta.clienteid,
           fechaventa: infoVenta.fecha,
           totalcobrar: infoVenta.total,
         };
@@ -815,7 +815,7 @@ app.delete(
       if (modelName === "pedidos") {
         const records = await model.destroy({
           where: {
-            clienteId: id,
+            clienteid: id,
           },
         });
         return res.json(records);
@@ -871,7 +871,7 @@ async function Inventario(sequelize) {
 	COALESCE(SUM(t1.stock),0)+COALESCE(SUM(t2.cantidad),0) AS stockComprado,
 	(COALESCE(SUM(t1.stock),0)+COALESCE(SUM(t2.cantidad),0)) * t1.costo AS valorTotalDolares
 FROM productos t1, compras t2
-WHERE t1.id = t2.productoId
+WHERE t1.id = t2.productoid
 GROUP BY t1.id;
     `);
 
@@ -905,7 +905,7 @@ GROUP BY t1.id;
 	    COALESCE(SUM(t2.cantidad ),0) AS canttotalvendido
     FROM ventasdetalles AS t2 
     LEFT JOIN ventas AS t1
-    ON t2.ventaId = t1.id;
+    ON t2.ventaid = t1.id;
     `);
 
   const [cantidad_total_comprado, metadatactc] = await sequelize.query(`
@@ -922,7 +922,7 @@ GROUP BY t1.id;
     SELECT
 	    COALESCE(SUM(t2.cantidad * (t1.precioCompra * (t1.porcentaje/100))),0) AS ganancia
     FROM ventas t3, ventasdetalles t2, productos t1
-    WHERE t3.status != 0 AND t2.ventaId = t3.id AND t2.productoId = t1.id;
+    WHERE t3.status != 0 AND t2.ventaid = t3.id AND t2.productoid = t1.id;
       `);
 
   const [cuentasporcobrar, metadatacxc] = await sequelize.query(`
@@ -993,13 +993,13 @@ async function dataProductos(sequelize) {
   const [cantidad_productos, metadatacp] = await sequelize.query(`
   SELECT
     t1.id,
-    t1.codigoP,
+    t1.codigop,
     t1.nombre,
-    (SELECT nombre FROM categorias WHERE id = t1.categoriaId) AS categorias,
-    t1.precioCompra,
-    t1.precioVenta,
+    (SELECT nombre FROM categorias WHERE id = t1.categoriaid) AS categorias,
+    t1.preciocompra,
+    t1.precioventa,
     t1.stock AS stockAnt,
-    COALESCE(t1.stock + SUM(t2.cantidad), t1.stock) - COALESCE((SELECT SUM(cantidad) FROM ventasdetalles WHERE productoId = t1.id ), 0) - COALESCE((SELECT SUM(cantidad) FROM pedidos WHERE productosId = t1.id), 0) AS stock,
+    COALESCE(t1.stock + SUM(t2.cantidad), t1.stock) - COALESCE((SELECT SUM(cantidad) FROM ventasdetalles WHERE productoid = t1.id ), 0) - COALESCE((SELECT SUM(cantidad) FROM pedidos WHERE productosid = t1.id), 0) AS stock,
     t1.imagen,
     t1.tasa,
     t1.costo,
@@ -1010,7 +1010,7 @@ async function dataProductos(sequelize) {
   FROM
     productos t1
   LEFT JOIN
-    compras t2 ON t1.id = t2.productoId
+    compras t2 ON t1.id = t2.productoid
   GROUP BY t1.id;
   `);
 
@@ -1021,18 +1021,18 @@ async function dataProductosVentas(sequelize) {
   const [cantidad_productos, metadatacp] = await sequelize.query(`
   SELECT
     t1.id,
-    t1.codigoP,
+    t1.codigop,
     t1.nombre,
-    t1.precioVenta,
-    COALESCE(t1.stock + SUM(t2.cantidad), t1.stock) - COALESCE((SELECT SUM(cantidad) FROM ventasdetalles WHERE productoId = t1.id ), 0) - COALESCE((SELECT SUM(cantidad) FROM pedidos WHERE productosId = t1.id), 0) AS stock,
+    t1.precioventa,
+    COALESCE(t1.stock + SUM(t2.cantidad), t1.stock) - COALESCE((SELECT SUM(cantidad) FROM ventasdetalles WHERE productoid = t1.id ), 0) - COALESCE((SELECT SUM(cantidad) FROM pedidos WHERE productosid = t1.id), 0) AS stock,
     t1.imagen,
-    (t1.precioVenta / t1.tasa) AS costo,
+    (t1.precioventa / t1.tasa) AS costo,
     t1.status,
     t1.exento
   FROM
     productos t1
   LEFT JOIN
-    compras t2 ON t1.id = t2.productoId
+    compras t2 ON t1.id = t2.productoid
   GROUP BY t1.id;
   `);
 
