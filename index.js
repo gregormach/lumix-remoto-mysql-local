@@ -868,11 +868,11 @@ async function Inventario(sequelize) {
 
   const [cantidad_compras_producto, metadataccp] = await sequelize.query(`
     SELECT
-	COALESCE(SUM(t1.stock),0)+COALESCE(SUM(t2.cantidad),0) AS stockComprado,
-	(COALESCE(SUM(t1.stock),0)+COALESCE(SUM(t2.cantidad),0)) * t1.costo AS valorTotalDolares
-FROM productos t1, compras t2
-WHERE t1.id = t2.productoid
-GROUP BY t1.id;
+	    COALESCE(SUM(t1.stock),0)+COALESCE(SUM(t2.cantidad),0) AS stockComprado,
+	    (COALESCE(SUM(t1.stock),0)+COALESCE(SUM(t2.cantidad),0)) * t1.costo AS valorTotalDolares
+    FROM productos t1, compras t2
+    WHERE t1.id = t2.productoid
+    GROUP BY t1.id;
     `);
 
   const stockComprado = cantidad_compras_producto.reduce(
