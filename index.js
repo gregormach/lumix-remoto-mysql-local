@@ -20,6 +20,7 @@ const validaTokenAuth = require("./middlewares/auth");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const { jwtSecret } = require("./config/env");
+const { parse } = require("libphonenumber-js");
 
 const agent = new https.Agent({
   rejectUnauthorized: false, // ⚠ Ignora errores de certificado (solo para desarrollo)
@@ -541,6 +542,9 @@ app.post(
             fecha: element.fecha,
             productoid: element.productoid,
             cantidad: element.cantidad,
+            cantunidades: element.cantunidades,
+            cantbultos: element.cantbultos,
+            mayordetal: element.mayordetal,
             preciounitario: element.preciounitario,
             subtotal: element.subtotal,
             iva: element.iva,
@@ -551,6 +555,7 @@ app.post(
           const modelp = req.db.models["productos"];
           updateCostosPreciosProductos(
             element.preciounitario,
+            element.tasa,
             element.porcentaje,
             element.costo,
             element.productoid,
@@ -728,6 +733,7 @@ app.put(
           productos.forEach((element) => {
             updateCostosPreciosProductos(
               element.costo * req.body.usd,
+              req.body.usd,
               element.porcentaje,
               element.costo,
               element.id,
@@ -877,14 +883,14 @@ async function Inventario(sequelize) {
 
   const stockComprado = cantidad_compras_producto.reduce(
     (accumulator, item) => {
-      return (accumulator += item.stockComprado);
+      return (accumulator += parseInt(item.stockComprado));
     },
     0
   );
 
   const valorTotalDolares = cantidad_compras_producto.reduce(
     (accumulator, item) => {
-      return (accumulator += item.valorTotalDolares);
+      return (accumulator += parseFloat(item.valorTotalDolares));
     },
     0
   );
@@ -976,6 +982,7 @@ async function dataProductosModulo(sequelize) {
     t1.tasa,
     t1.costo,
     t1.porcentaje,
+    t1.detalmayor,
     t1.fecha,
     t1.status,
     t1.exento
@@ -1041,6 +1048,7 @@ async function dataProductosVentas(sequelize) {
 
 async function updateCostosPreciosProductos(
   preciounitario,
+  tasa,
   porcentaje,
   costo,
   productoid,
@@ -1050,6 +1058,7 @@ async function updateCostosPreciosProductos(
     {
       preciocompra: preciounitario,
       precioventa: preciounitario / (1 - porcentaje / 100),
+      tasa: tasa,
       costo: costo,
     },
     {
