@@ -20,7 +20,7 @@ const validaTokenAuth = require("./middlewares/auth");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const { jwtSecret } = require("./config/env");
-const { parse } = require("libphonenumber-js");
+//const { parse } = require("libphonenumber-js");
 
 const agent = new https.Agent({
   rejectUnauthorized: false, // ⚠ Ignora errores de certificado (solo para desarrollo)
