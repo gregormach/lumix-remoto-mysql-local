@@ -543,7 +543,6 @@ app.post(
             productoid: element.productoid,
             cantidad: element.cantidad,
             cantunidades: element.cantunidades,
-            cantbultos: element.cantbultos,
             mayordetal: element.mayordetal,
             preciounitario: element.preciounitario,
             subtotal: element.subtotal,
@@ -606,8 +605,11 @@ app.get(
           FROM ventas AS t1
         ORDER BY t1.id DESC;
         `);
-        const [recordsProductos, recordspro] = await req.db.sequelize.query(`
-          SELECT
+        const [recordsCompras, recordscom] = await req.db.sequelize.query(`
+        SELECT t1.productoid, t1.cantidad, t1.cantunidades, t1.mayordetal FROM compras t1;
+        `);
+        /*
+        SELECT
             t1.id,
             t1.codigop,
             t1.nombre,
@@ -616,6 +618,7 @@ app.get(
             COALESCE(t1.stock + SUM(t2.cantidad), t1.stock) - COALESCE((SELECT SUM(cantidad) FROM ventasdetalles WHERE productoid = t1.id ), 0) - COALESCE((SELECT SUM(cantidad) FROM pedidos WHERE productosid = t1.id), 0) AS stock,
             t1.imagen,
             (t1.precioventa / t1.tasa) AS costo,
+            t1.detalmayor,
             t1.status,
             t1.exento
           FROM
@@ -623,9 +626,29 @@ app.get(
           LEFT JOIN
             compras t2 ON t1.id = t2.productoid
           GROUP BY t1.id;
+        */
+        const [recordsProductos, recordspro] = await req.db.sequelize.query(`
+          SELECT
+            t1.id,
+            t1.codigop,
+            t1.nombre,
+            (SELECT nombre FROM categorias WHERE id = t1.categoriaid) AS categorias,
+            t1.precioventa,
+            COALESCE(t1.stock + ( COALESCE((SELECT SUM(cantidad) FROM compras WHERE productoid = t1.id),0) ), t1.stock) - COALESCE((SELECT SUM(cantidad) FROM ventasdetalles WHERE productoid = t1.id ), 0) - COALESCE((SELECT SUM(cantidad) FROM pedidos WHERE productosid = t1.id), 0) AS stock,
+            t1.imagen,
+            (t1.precioventa / t1.tasa) AS costo,
+            t1.detalmayor,
+            t1.status,
+            t1.exento
+          FROM
+            productos t1
+          GROUP BY t1.id;
           `);
-
-        return res.json({ ventas: recordsVentas, productos: recordsProductos });
+        return res.json({
+          ventas: recordsVentas,
+          productos: recordsProductos,
+          compras: recordsCompras,
+        });
       }
       if (modelName === "compras") {
         const [records, recordsc] = await req.db.sequelize.query(`
