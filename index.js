@@ -9,10 +9,12 @@ const axios = require("axios");
 const csrf = require("csurf");
 const cookieParser = require("cookie-parser");
 const config = require("./config/config");
-//const configdos = require("./config/configdos");
-require("dotenv").config();
 const path = require("path");
+//require('dotenv').config({ override: true });
+//require("dotenv").config();
+require('@dotenvx/dotenvx').config()
 const PORT = process.env.PORT || 5000;
+const PREFI = process.env.PREFI || "dblx_";
 
 const bodyParser = require("body-parser");
 const validaTokenAuth = require("./middlewares/auth");
@@ -20,7 +22,6 @@ const validaTokenAuth = require("./middlewares/auth");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const { jwtSecret } = require("./config/env");
-//const { parse } = require("libphonenumber-js");
 
 const agent = new https.Agent({
   rejectUnauthorized: false, // ⚠ Ignora errores de certificado (solo para desarrollo)
@@ -348,7 +349,7 @@ app.post(`${rutaPrincipal}/connections`, validaTokenAuth, async (req, res) => {
 
   try {
     const sequelize = new Sequelize(
-      `dblx_${dbPath}`,
+      `${PREFI}${dbPath}`,
       config.development.username,
       config.development.password,
       {
